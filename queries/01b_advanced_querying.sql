@@ -18,3 +18,15 @@ with RevQty6mo as (
 )
 select * from RevQty6mo
 where total_amt > 10000;
+
+
+----------------------------------------------------------------------------------
+
+
+select CONCAT(CONCAT(cx.last_name, ', '), cx.first_name), EXTRACT("MONTH" from o.order_date) as month, o.total_amount as month_total
+from stg_customers as cx
+join stg_orders	 as o on o.customer_id = cx.customer_id
+join stg_payments as sp on sp.order_id = o.order_id
+where EXTRACT("YEAR" from O.ORDER_DATE) = '2024'
+and LOWER(SP.PAYMENT_STATUS) = 'completed'
+order by EXTRACT("MONTH" from o.order_date), cx.last_name asc
