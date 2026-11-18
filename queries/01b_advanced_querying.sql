@@ -22,11 +22,20 @@ where total_amt > 10000;
 
 ----------------------------------------------------------------------------------
 
-
-select CONCAT(CONCAT(cx.last_name, ', '), cx.first_name), EXTRACT("MONTH" from o.order_date) as month, o.total_amount as month_total
+with total_perCX_perMO as (
+select cx.customer_id, CONCAT(CONCAT(cx.last_name, ', '), cx.first_name) as cx_name,  DATE_TRUNC('month', order_date) AS months, o.total_amount as month_total
 from stg_customers as cx
 join stg_orders	 as o on o.customer_id = cx.customer_id
 join stg_payments as sp on sp.order_id = o.order_id
 where EXTRACT("YEAR" from O.ORDER_DATE) = '2024'
 and LOWER(SP.PAYMENT_STATUS) = 'completed'
-order by EXTRACT("MONTH" from o.order_date), cx.last_name asc
+group by months, cx.customer_id, o.total_amount
+order by months, month_total desc)
+select cx_name,  months,  month_total 
+from total_perCX_perMO t1 
+where (
+	select COUNT(*) 
+	from total_perCX_perMO t2
+	where t2.months = t1.months 
+	and (t2.month_total > t1.month_total or (t2.month_total = t1.month_total and t2.cx_name = t1.cx_name))
+) < 4;
